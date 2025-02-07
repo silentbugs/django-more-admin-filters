@@ -1,0 +1,103 @@
+{% load i18n admin_urls static %}
+
+<style>
+    .admin-select2-filter {
+        position: relative;
+        padding: 0 15px;
+        box-sizing: border-box;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        max-width: 300px;
+    }
+
+    .autocomplete {
+        position: relative;
+    }
+
+    .autocomplete .autocomplete-result {
+        padding: 0 15px;
+        box-sizing: border-box;
+    }
+
+    .autocomplete .autocomplete-result ul {
+        margin: 5px 0;
+        padding: 0 5px 15px !important;
+    }
+
+    .autocomplete .autocomplete-result ul li {
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+</style>
+
+<details class="autocomplete" data-filter-title="{{ choices.0.field_name }}" open="">
+    <summary>
+        <h3>{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</h3>
+    </summary>
+
+    <script type="text/javascript">
+        django.jQuery(document).ready(function() {
+            var field_name = '{{ spec.field_path }}';
+            var field_id = '#id_' + field_name;
+            var selectedValue = '{{ choices.0.selected_item.pk }}';
+
+            django.jQuery(field_id).djangoAdminSelect2({
+            }).on('select2:select', function(e) {
+                var url = new URL(window.location.href);
+                var key = `${field_name}__id__exact`;
+
+                if (url.searchParams.has(key)) {
+                    url.searchParams.delete(key);
+                }
+
+                url.searchParams.append(key, e.params.data.id)
+                window.location.href = url;
+            }).on('select2:clear', function(e) {
+                var url = new URL(window.location.href);
+                var key = `${field_name}__id__exact`;
+
+                if (url.searchParams.has(key)) {
+                    url.searchParams.delete(key);
+                }
+
+                window.location.href = url;
+            });
+
+            // render selected element's name
+            var selectElement = django.jQuery(field_id);
+
+            if (selectedValue) {
+                selectElement.val(selectedValue).trigger('change');
+            }
+        });
+    </script>
+
+    <div class="admin-select2-filter">
+        <select
+            style="width: 100%;"
+            id="id_{{ spec.field_path }}"
+            data-ajax--cache="true"
+            data-ajax--delay=250
+            data-ajax--type="GET"
+            data-ajax--url="{{ choices.0.autocomplete_url|safe }}"
+            data-app-label="{{ choices.0.app_label }}"
+            data-model-name="{{ choices.0.model_name }}"
+            data-field-name="{{ choices.0.field_name }}"
+            data-theme="admin-autocomplete"
+            data-allow-clear="true"
+            data-placeholder=""
+            class="admin-autocomplete"
+        >
+            <option value="">---------</option>
+            {% if choices.0.selected_item %}
+                <option selected="selected" value="{{ choices.0.selected_item.pk }}">{{ choices.0.selected_item }}</option>
+            {% endif %}
+        </select>
+
+        <div
+            class="autocomplete-result"
+            id="{{ choices.0.field_name }}_autocomplete_result"
+        >
+        </div>
+    </div>
+</details>

@@ -88,6 +88,14 @@ Filter classes
     involved in that relation.
 * **BooleanAnnotationFilter**
     Filter for annotated boolean-attributes.
+* **AutocompleteListFilter**
+    Select2 dropdown using django admin's autocomplete endpoints.
+    Does not load all data at once.
+* **RelatedAutocompleteListFilter**
+    Select2 dropdown using django admin's autocomplete endpoints (for related models).
+    Does not load all data at once.
+* **Select2ChoicesDropdownFilter**
 
+* **Select2RelatedDropdownFilter**
 
 .. note:: More kind of annotation filters will be added in future versions.

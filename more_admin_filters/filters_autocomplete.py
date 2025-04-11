@@ -10,6 +10,9 @@ class AutocompleteListFilter(RelatedDropdownFilter, AutocompleteMixin):
     def _get_app_label(self):
         return self.app_label
 
+    def _get_model_name(self):
+        return self.model_name
+
     def __init__(self, field, request, params, model, model_admin, *args, **kwargs):
         self.value = None
 
@@ -33,17 +36,14 @@ class AutocompleteListFilter(RelatedDropdownFilter, AutocompleteMixin):
         return queryset
 
     def choices(self, changelist):
-        model_name = self.model_name
-        field_name = self.field.name
-
         autocomplete_url = reverse("admin:autocomplete")
         selected_item = self.field.related_model.objects.filter(id=self.value).first()
 
         return (
             {
                 "app_label": self._get_app_label(),
-                "model_name": model_name,
-                "field_name": field_name,
+                "model_name": self._get_model_name(),
+                "field_name": self.field.name,
                 "autocomplete_url": autocomplete_url,
                 "selected_item": selected_item if selected_item else "",
             },
@@ -57,4 +57,7 @@ class RelatedAutocompleteListFilter(AutocompleteListFilter):
     """
 
     def _get_app_label(self):
-        return self.related_app_label
+        return self.field.remote_field.related_model._meta.app_label
+
+    def _get_model_name(self):
+        return self.field.remote_field.related_model._meta.model_name

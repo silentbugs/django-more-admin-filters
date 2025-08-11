@@ -30,10 +30,19 @@ class AutocompleteListFilter(RelatedDropdownFilter, AutocompleteMixin):
     def queryset(self, request, queryset):
         value = self.used_parameters.get(f"{self.field_path}__id__exact")
 
-        if value:
-            self.value = value
-            return queryset.filter(**{self.field_path: value})
-        return queryset
+        if not value:
+            return queryset
+
+        if isinstance(value, list):
+            # in case of multiples, always assume the last value
+            _value = value[-1]
+        else:
+            _value = value
+
+        # assign value to self for use in choices
+        self.value = _value
+
+        return queryset.filter(**{self.field_path: _value})
 
     def choices(self, changelist):
         autocomplete_url = reverse("admin:autocomplete")

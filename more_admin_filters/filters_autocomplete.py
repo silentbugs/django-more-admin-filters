@@ -42,11 +42,19 @@ class AutocompleteListFilter(RelatedDropdownFilter, AutocompleteMixin):
         # assign value to self for use in choices
         self.value = _value
 
-        return queryset.filter(**{self.field_path: _value})
+        try:
+            return queryset.filter(**{self.field_path: _value})
+        except ValueError:
+            return queryset.none()
 
     def choices(self, changelist):
         autocomplete_url = reverse("admin:autocomplete")
-        selected_item = self.field.related_model.objects.filter(id=self.value).first()
+        selected_item = None
+
+        try:
+            selected_item = self.field.related_model.objects.filter(id=self.value).first()
+        except ValueError:
+            selected_item = None
 
         return (
             {

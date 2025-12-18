@@ -130,10 +130,7 @@ class MultiSelectFilter(MultiSelectMixin, admin.AllValuesFieldListFilter):
             queryset = model_admin.get_queryset(request)
         else:
             queryset = parent_model._default_manager.all()
-        self.lookup_choices = (queryset
-                               .distinct()
-                               .order_by(field.name)
-                               .values_list(field.name, flat=True))
+        self.lookup_choices = self.lookups(queryset=queryset, field=field)
         super(admin.AllValuesFieldListFilter, self).__init__(field, request, params, model, model_admin, field_path)
         flatten_used_parameters(self.used_parameters)
         self.used_parameters = self.prepare_used_parameters(self.used_parameters)
@@ -149,6 +146,12 @@ class MultiSelectFilter(MultiSelectMixin, admin.AllValuesFieldListFilter):
             if not key.endswith('__in'): continue
             used_parameters[key] = [v.replace('%~', ',') for v in value]
         return used_parameters
+
+    def lookups(self, queryset, field):
+        if field.choices:
+            return list(field.flatchoices)
+
+        return queryset.distinct().order_by(field.name).values_list(field.name, flat=True)
 
     def choices(self, changelist):
         add_facets = getattr(changelist, "add_facets", False)
@@ -168,13 +171,16 @@ class MultiSelectFilter(MultiSelectMixin, admin.AllValuesFieldListFilter):
                 include_none = True
                 empty_title = f"{empty_title} ({count})" if add_facets else empty_title
                 continue
+
+            title = val[1] if isinstance(val, tuple) else val
             val = str(val)
             qval = self.prepare_querystring_value(val)
             yield {
                 'selected': qval in self.lookup_vals,
                 'query_string': self.querystring_for_choices(qval, changelist),
-                "display": f"{val} ({count})" if add_facets else val,
+                "display": f"{title} ({count})" if add_facets else title,
             }
+
         if include_none:
             yield {
                 'selected': bool(self.lookup_val_isnull),

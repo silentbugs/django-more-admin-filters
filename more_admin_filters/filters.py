@@ -172,9 +172,13 @@ class MultiSelectFilter(MultiSelectMixin, admin.AllValuesFieldListFilter):
                 empty_title = f"{empty_title} ({count})" if add_facets else empty_title
                 continue
 
-            title = val[1] if isinstance(val, tuple) else val
-            val = str(val)
-            qval = self.prepare_querystring_value(val)
+            if isinstance(val, tuple):
+                value, title = val
+            else:
+                value = title = val
+
+            value = str(value)
+            qval = self.prepare_querystring_value(value)
             yield {
                 'selected': qval in self.lookup_vals,
                 'query_string': self.querystring_for_choices(qval, changelist),

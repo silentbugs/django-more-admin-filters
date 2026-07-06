@@ -1,10 +1,10 @@
-from .filters import RelatedDropdownFilter
-
 from django.contrib.admin.widgets import AutocompleteMixin
 from django.urls import reverse
 
+from .filters import MultiSelectRelatedFilter, RelatedDropdownFilter, RelatedOnlyDropdownFilter
 
-class AutocompleteListFilter(RelatedDropdownFilter, AutocompleteMixin):
+
+class BaseAutocompleteListFilter(AutocompleteMixin):
     template = "more_admin_filters/autocomplete_list_filter.html"
 
     def _get_app_label(self):
@@ -67,10 +67,95 @@ class AutocompleteListFilter(RelatedDropdownFilter, AutocompleteMixin):
         )
 
 
+class AutocompleteListFilter(RelatedDropdownFilter, BaseAutocompleteListFilter):
+    pass
+
+
+class AutocompleteOnlyListFilter(RelatedOnlyDropdownFilter, BaseAutocompleteListFilter):
+    pass
+
+
 class RelatedAutocompleteListFilter(AutocompleteListFilter):
     """
     You need to use this filter if your related model (that you want to filter by) is on a different
     app than your original model.
+    """
+
+    def _get_app_label(self):
+        return self.field.remote_field.related_model._meta.app_label
+
+    def _get_model_name(self):
+        return self.field.remote_field.related_model._meta.model_name
+
+
+class AutocompleteMultipleListFilter(MultiSelectRelatedFilter, AutocompleteMixin):
+    template = "more_admin_filters/autocomplete_multiple_list_filter.html"
+
+    def _get_app_label(self):
+        return self.app_label
+
+    def _get_model_name(self):
+        return self.model_name
+
+    def __init__(self, field, request, params, model, model_admin, *args, **kwargs):
+        self.values = []
+        super().__init__(field, request, params, model, model_admin, *args, **kwargs)
+
+        self.app_label = model._meta.app_label
+        self.model = model
+        self.model_name = field.model._meta.model_name
+        self.related_model = field.related_model
+        self.related_app_label = field.related_model._meta.app_label
+        self.related_model_name = field.related_model._meta.model_name
+        self.request = request
+        self.field_path = kwargs["field_path"]
+
+    def queryset(self, request, queryset):
+        raw_value = self.used_parameters.get(f"{self.field_path}__id__in")
+
+        if not raw_value:
+            return queryset
+
+        # values are comma-separated IDs
+        if isinstance(raw_value, str):
+            values = [v for v in raw_value.split(",") if v]
+        elif isinstance(raw_value, list):
+            values = raw_value
+        else:
+            values = []
+
+        self.values = values
+
+        try:
+            return queryset.filter(**{f"{self.field_path}__id__in": values})
+        except ValueError:
+            return queryset.none()
+
+    def choices(self, changelist):
+        autocomplete_url = reverse("admin:autocomplete")
+        selected_items = []
+
+        if self.values:
+            try:
+                selected_items = list(self.field.related_model.objects.filter(id__in=self.values))
+            except ValueError:
+                selected_items = []
+
+        return (
+            {
+                "app_label": self._get_app_label(),
+                "model_name": self._get_model_name(),
+                "field_name": self.field.name,
+                "autocomplete_url": autocomplete_url,
+                "selected_items": selected_items,
+            },
+        )
+
+
+class RelatedAutocompleteMultipleListFilter(AutocompleteMultipleListFilter):
+    """
+    Use this filter if your related model (that you want to filter by)
+    is in a different app than your original model.
     """
 
     def _get_app_label(self):

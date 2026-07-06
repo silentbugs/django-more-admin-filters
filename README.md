@@ -82,6 +82,8 @@ MyModelAdmin(admin.ModelAdmin):
 - **RelatedAutocompleteListFilter**
   Select2 dropdown using django admin's autocomplete endpoints (for related models).
   Does not load all data at once.
+- **AutocompleteMultipleListFilter**
+- **RelatedAutocompleteMultipleListFilter**
 - **Select2ChoicesDropdownFilter**
 - **Select2RelatedDropdownFilter**
 

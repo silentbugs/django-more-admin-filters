@@ -4,6 +4,20 @@ from django.urls import reverse
 from .filters import MultiSelectRelatedFilter, RelatedDropdownFilter, RelatedOnlyDropdownFilter
 
 
+class LazyAutocompleteListFilterMixin:
+    """Avoid loading all related objects for AJAX-backed filters."""
+
+    def field_choices(self, field, request, model_admin):
+        # The autocomplete templates get their options over AJAX and only use
+        # lookup_choices to decide whether the filter should be displayed.
+        return ()
+
+    def has_output(self):
+        # RelatedFieldListFilter hides filters without lookup choices by
+        # default, but autocomplete options are deliberately loaded lazily.
+        return True
+
+
 class BaseAutocompleteListFilter(AutocompleteMixin):
     template = "more_admin_filters/autocomplete_list_filter.html"
 
@@ -71,7 +85,10 @@ class AutocompleteListFilter(RelatedDropdownFilter, BaseAutocompleteListFilter):
     pass
 
 
-class AutocompleteOnlyListFilter(RelatedOnlyDropdownFilter, BaseAutocompleteListFilter):
+class AutocompleteOnlyListFilter(
+    RelatedOnlyDropdownFilter,
+    BaseAutocompleteListFilter,
+):
     pass
 
 
@@ -86,6 +103,18 @@ class RelatedAutocompleteListFilter(AutocompleteListFilter):
 
     def _get_model_name(self):
         return self.field.remote_field.related_model._meta.model_name
+
+
+class LazyAutocompleteListFilter(
+    LazyAutocompleteListFilterMixin, AutocompleteListFilter
+):
+    pass
+
+
+class LazyRelatedAutocompleteListFilter(
+    LazyAutocompleteListFilterMixin, RelatedAutocompleteListFilter
+):
+    pass
 
 
 class AutocompleteMultipleListFilter(MultiSelectRelatedFilter, AutocompleteMixin):

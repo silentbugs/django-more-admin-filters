@@ -9,5 +9,10 @@ from .filters import (
     RelatedDropdownFilter,
     BooleanAnnotationFilter,
 )
-from .filters_autocomplete import AutocompleteListFilter, RelatedAutocompleteListFilter
+from .filters_autocomplete import (
+    AutocompleteListFilter,
+    LazyAutocompleteListFilter,
+    LazyRelatedAutocompleteListFilter,
+    RelatedAutocompleteListFilter,
+)
 from .filters_select2 import Select2ChoicesDropdownFilter, Select2RelatedDropdownFilter

@@ -1,10 +1,24 @@
 
 
-from django.test import TestCase
+from unittest import mock
+
+from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.auth.models import User
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+from more_admin_filters.filters import (
+    RelatedDropdownFilter,
+)
+from more_admin_filters import (
+    AutocompleteListFilter,
+    LazyAutocompleteListFilter,
+    LazyRelatedAutocompleteListFilter,
+    RelatedAutocompleteListFilter,
+)
+
 from ..management.commands.createtestdata import create_test_data
+from ..models import ModelA
 
 # Print python and django version for easier debugging.
 import sys, django
@@ -64,3 +78,59 @@ class FilterTest(TestCase):
         for query in queries:
             resp = self.client.get(self.url + '?' + query)
             self.assertEqual(resp.status_code, 200)
+
+
+class AutocompleteFilterTest(TestCase):
+    def setUp(self):
+        self.field = ModelA._meta.get_field("related_dropdown")
+        self.request = RequestFactory().get("/")
+        self.model_admin = ModelAdmin(ModelA, AdminSite())
+
+    def make_filter(self, filter_class):
+        return filter_class(
+            self.field,
+            self.request,
+            {},
+            ModelA,
+            self.model_admin,
+            field_path="related_dropdown",
+        )
+
+    def test_autocomplete_filters_do_not_build_related_field_choices(self):
+        filter_classes = (
+            LazyAutocompleteListFilter,
+            LazyRelatedAutocompleteListFilter,
+        )
+
+        for filter_class in filter_classes:
+            with self.subTest(filter_class=filter_class.__name__):
+                with mock.patch.object(
+                    RelatedDropdownFilter,
+                    "field_choices",
+                    side_effect=AssertionError("related choices were loaded eagerly"),
+                ):
+                    with self.assertNumQueries(0):
+                        autocomplete_filter = self.make_filter(filter_class)
+                        has_output = autocomplete_filter.has_output()
+
+                self.assertEqual(autocomplete_filter.lookup_choices, ())
+                self.assertTrue(has_output)
+
+    def test_standard_autocomplete_filters_keep_related_field_choices(self):
+        filter_classes = (
+            AutocompleteListFilter,
+            RelatedAutocompleteListFilter,
+        )
+        lookup_choices = ((1, "ModelB 1"),)
+
+        for filter_class in filter_classes:
+            with self.subTest(filter_class=filter_class.__name__):
+                with mock.patch.object(
+                    RelatedDropdownFilter,
+                    "field_choices",
+                    return_value=lookup_choices,
+                ) as field_choices:
+                    autocomplete_filter = self.make_filter(filter_class)
+
+                field_choices.assert_called_once()
+                self.assertEqual(autocomplete_filter.lookup_choices, lookup_choices)

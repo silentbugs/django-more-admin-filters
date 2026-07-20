@@ -78,10 +78,12 @@ MyModelAdmin(admin.ModelAdmin):
   Filter for annotated boolean attributes.
 - **AutocompleteListFilter**
   Select2 dropdown using django admin's autocomplete endpoints.
-  Does not load all data at once.
 - **RelatedAutocompleteListFilter**
   Select2 dropdown using django admin's autocomplete endpoints (for related models).
-  Does not load all data at once.
+- **LazyAutocompleteListFilter**
+  Lazy variant of `AutocompleteListFilter` that does not query every related object when rendered.
+- **LazyRelatedAutocompleteListFilter**
+  Lazy variant of `RelatedAutocompleteListFilter` that does not query every related object when rendered.
 - **AutocompleteMultipleListFilter**
 - **RelatedAutocompleteMultipleListFilter**
 - **Select2ChoicesDropdownFilter**

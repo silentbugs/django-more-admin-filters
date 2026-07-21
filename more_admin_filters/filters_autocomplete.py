@@ -18,14 +18,14 @@ class LazyAutocompleteListFilterMixin:
         return True
 
 
-class BaseAutocompleteListFilter(AutocompleteMixin):
+class BaseAutocompleteListFilter:
     template = "more_admin_filters/autocomplete_list_filter.html"
 
     def _get_app_label(self):
-        return self.app_label
+        return self.field.model._meta.app_label
 
     def _get_model_name(self):
-        return self.model_name
+        return self.field.model._meta.model_name
 
     def __init__(self, field, request, params, model, model_admin, *args, **kwargs):
         self.value = None
@@ -81,13 +81,13 @@ class BaseAutocompleteListFilter(AutocompleteMixin):
         )
 
 
-class AutocompleteListFilter(RelatedDropdownFilter, BaseAutocompleteListFilter):
+class AutocompleteListFilter(BaseAutocompleteListFilter, RelatedDropdownFilter):
     pass
 
 
 class AutocompleteOnlyListFilter(
-    RelatedOnlyDropdownFilter,
     BaseAutocompleteListFilter,
+    RelatedOnlyDropdownFilter,
 ):
     pass
 
@@ -98,11 +98,7 @@ class RelatedAutocompleteListFilter(AutocompleteListFilter):
     app than your original model.
     """
 
-    def _get_app_label(self):
-        return self.field.remote_field.related_model._meta.app_label
-
-    def _get_model_name(self):
-        return self.field.remote_field.related_model._meta.model_name
+    pass
 
 
 class LazyAutocompleteListFilter(
@@ -121,10 +117,10 @@ class AutocompleteMultipleListFilter(MultiSelectRelatedFilter, AutocompleteMixin
     template = "more_admin_filters/autocomplete_multiple_list_filter.html"
 
     def _get_app_label(self):
-        return self.app_label
+        return self.field.model._meta.app_label
 
     def _get_model_name(self):
-        return self.model_name
+        return self.field.model._meta.model_name
 
     def __init__(self, field, request, params, model, model_admin, *args, **kwargs):
         self.values = []
@@ -187,8 +183,4 @@ class RelatedAutocompleteMultipleListFilter(AutocompleteMultipleListFilter):
     is in a different app than your original model.
     """
 
-    def _get_app_label(self):
-        return self.field.remote_field.related_model._meta.app_label
-
-    def _get_model_name(self):
-        return self.field.remote_field.related_model._meta.model_name
+    pass

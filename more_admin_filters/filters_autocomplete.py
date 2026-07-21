@@ -65,10 +65,11 @@ class BaseAutocompleteListFilter:
         autocomplete_url = reverse("admin:autocomplete")
         selected_item = None
 
-        try:
-            selected_item = self.field.related_model.objects.filter(id=self.value).first()
-        except ValueError:
-            selected_item = None
+        if self.value is not None:
+            try:
+                selected_item = self.field.related_model.objects.filter(id=self.value).first()
+            except ValueError:
+                selected_item = None
 
         return (
             {

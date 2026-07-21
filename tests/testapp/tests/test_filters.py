@@ -139,6 +139,14 @@ class AutocompleteFilterTest(TestCase):
                 self.assertEqual(choice["model_name"], "modela")
                 self.assertEqual(choice["field_name"], "related_dropdown")
 
+    def test_autocomplete_choices_without_selection_do_not_query(self):
+        autocomplete_filter = self.make_filter(AutocompleteListFilter)
+
+        with self.assertNumQueries(0):
+            choice = autocomplete_filter.choices(None)[0]
+
+        self.assertEqual(choice["selected_item"], "")
+
     def setUp(self):
         self.field = ModelA._meta.get_field("related_dropdown")
         self.request = RequestFactory().get("/")

@@ -7,7 +7,7 @@ from .filters import (
 
 
 class Select2Filter:
-    template = "more_admin_filters//select2_related_dropdown_filter.html"
+    template = "more_admin_filters/select2_related_dropdown_filter.html"
 
 
 class Select2DropdownFilter(Select2Filter, DropdownFilter):

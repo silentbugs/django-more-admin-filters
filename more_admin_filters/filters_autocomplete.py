@@ -67,7 +67,7 @@ class BaseAutocompleteListFilter:
 
         if self.value is not None:
             try:
-                selected_item = self.field.related_model.objects.filter(id=self.value).first()
+                selected_item = self.field.related_model.objects.filter(pk=self.value).first()
             except ValueError:
                 selected_item = None
 
@@ -163,7 +163,7 @@ class AutocompleteMultipleListFilter(MultiSelectRelatedFilter, AutocompleteMixin
 
         if self.values:
             try:
-                selected_items = list(self.field.related_model.objects.filter(id__in=self.values))
+                selected_items = list(self.field.related_model.objects.filter(pk__in=self.values))
             except ValueError:
                 selected_items = []
 

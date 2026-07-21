@@ -48,6 +48,7 @@
             data-model-name="{{ choices.0.model_name }}"
             data-field-name="{{ choices.0.field_name }}"
             data-theme="admin-autocomplete"
+            data-allow-clear="true"
             data-placeholder=""
             class="admin-autocomplete"
         >
@@ -77,10 +78,7 @@ django.jQuery(document).ready(function() {
     var field_name = '{{ spec.field_path }}';
     var field_id = '#id_' + field_name;
 
-    var $select = django.jQuery(field_id).djangoAdminSelect2({
-        allowClear: true,
-        multiple: true
-    });
+    var $select = django.jQuery(field_id);
 
     // click handler for submit
     django.jQuery('#{{ title|slugify }}_submit').on('click', function(e) {

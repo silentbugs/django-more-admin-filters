@@ -71,8 +71,7 @@
         var field_id = '#id_' + field_name;
         var selectedValue = '{{ choices.0.selected_item.pk }}';
 
-        django.jQuery(field_id).djangoAdminSelect2({
-        }).on('select2:select', function(e) {
+        django.jQuery(field_id).on('select2:select', function(e) {
             var url = new URL(window.location.href);
             var key = `${field_name}__id__exact`;
 

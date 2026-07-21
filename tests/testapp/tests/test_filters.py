@@ -4,12 +4,14 @@ from unittest import mock
 
 from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from more_admin_filters.filters import (
     RelatedDropdownFilter,
 )
+from more_admin_filters.filters_autocomplete import AutocompleteOnlyListFilter
 from more_admin_filters import (
     AutocompleteListFilter,
     LazyAutocompleteListFilter,
@@ -81,6 +83,62 @@ class FilterTest(TestCase):
 
 
 class AutocompleteFilterTest(TestCase):
+    def test_autocomplete_templates_rely_on_django_initialization(self):
+        choices = ({
+            "app_label": "testapp",
+            "model_name": "modela",
+            "field_name": "related_dropdown",
+            "autocomplete_url": reverse("admin:autocomplete"),
+        },)
+        context = {
+            "choices": choices,
+            "spec": mock.Mock(field_path="related_dropdown"),
+            "title": "Related dropdown",
+        }
+
+        for template_name in (
+            "more_admin_filters/autocomplete_list_filter.html",
+            "more_admin_filters/autocomplete_multiple_list_filter.html",
+        ):
+            with self.subTest(template_name=template_name):
+                rendered = render_to_string(template_name, context)
+                self.assertNotIn(".djangoAdminSelect2(", rendered)
+                self.assertIn('class="admin-autocomplete"', rendered)
+
+    def test_autocomplete_filters_use_autocomplete_template(self):
+        filter_classes = (
+            AutocompleteListFilter,
+            AutocompleteOnlyListFilter,
+            RelatedAutocompleteListFilter,
+            LazyAutocompleteListFilter,
+            LazyRelatedAutocompleteListFilter,
+        )
+
+        for filter_class in filter_classes:
+            with self.subTest(filter_class=filter_class.__name__):
+                self.assertEqual(
+                    filter_class.template,
+                    "more_admin_filters/autocomplete_list_filter.html",
+                )
+
+    def test_autocomplete_choices_include_source_field_metadata(self):
+        filter_classes = (
+            AutocompleteListFilter,
+            AutocompleteOnlyListFilter,
+            RelatedAutocompleteListFilter,
+            LazyAutocompleteListFilter,
+            LazyRelatedAutocompleteListFilter,
+        )
+
+        for filter_class in filter_classes:
+            with self.subTest(filter_class=filter_class.__name__):
+                autocomplete_filter = self.make_filter(filter_class)
+                choice = autocomplete_filter.choices(None)[0]
+
+                self.assertEqual(choice["app_label"], "testapp")
+                self.assertEqual(choice["model_name"], "modela")
+                self.assertEqual(choice["field_name"], "related_dropdown")
+
     def setUp(self):
         self.field = ModelA._meta.get_field("related_dropdown")
         self.request = RequestFactory().get("/")
